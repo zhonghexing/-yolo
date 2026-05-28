@@ -1,0 +1,16 @@
+# NEU-DET 钢材表面缺陷检测数据集
+# 6类缺陷，共 1800 张图片（train 1296 + val 324 + test 180）
+
+path: D:/yolo/datasets/neu_det
+train: train/images
+val: val/images
+test: test/images
+
+nc: 6
+names:
+  - crazing            # 0 - 龟裂
+  - inclusion          # 1 - 夹杂
+  - patches            # 2 - 斑块
+  - pitted_surface     # 3 - 麻点
+  - rolled-in_scale    # 4 - 氧化皮
+  - scratches          # 5 - 划痕

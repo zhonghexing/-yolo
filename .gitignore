@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Training outputs (large files)
+runs/train/*/weights/*.pt
+runs/train/*/train_batch*.jpg
+runs/train/*/val_batch*.jpg
+runs/train/*/*.png
+runs/train/*/*.csv
+
+# Keep only best.pt
+!runs/train/*/weights/best.pt
+
+# Dataset (too large for git)
+datasets/neu_det/train/
+datasets/neu_det/val/
+datasets/neu_det/test/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# YOLO
+*.pt
+!yolov8m.pt

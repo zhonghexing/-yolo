@@ -1,0 +1,29 @@
+# YOLOv8 螺丝缺陷检测项目依赖
+# Screw Defect Detection Project Dependencies
+
+# 核心依赖
+ultralytics>=8.0.0        # YOLOv8 框架
+# PyTorch 已安装 (torch 2.12.0+cu126)，不要从清华源重复安装！
+# 如需重新安装，使用: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+# torch>=2.0.0
+# torchvision>=0.15.0
+
+# 数据处理
+numpy>=1.24.0             # 数值计算
+opencv-python>=4.8.0      # 图像处理
+Pillow>=10.0.0            # 图像IO
+
+# 可视化与监控
+matplotlib>=3.7.0         # 绘图
+seaborn>=0.12.0           # 统计图表
+tensorboard>=2.14.0       # 训练监控
+
+# 评估与报告
+scikit-learn>=1.3.0       # 机器学习工具（混淆矩阵等）
+pandas>=2.0.0             # 数据分析
+tqdm>=4.65.0              # 进度条
+
+# 模型导出（可选）
+onnx>=1.14.0              # ONNX 导出
+onnxruntime>=1.15.0       # ONNX 推理
+coremltools>=7.0          # CoreML 导出 (macOS)
