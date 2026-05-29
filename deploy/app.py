@@ -10,37 +10,31 @@ Steel Defect Detection System - Modern UI
 - 响应式设计
 """
 
-import os
 import sys
 import time
-import json
 from pathlib import Path
 from datetime import datetime
-from typing import List, Optional
 
 import cv2
-import numpy as np
 
-from constants import CLASS_NAMES_CN, CLASS_COLORS_RGB, CLASS_NAMES, CLASS_COLORS_BGR
+from constants import CLASS_NAMES_CN, CLASS_NAMES
 from inference import _put_cn_text
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
-    QMenuBar, QMenu, QAction, QToolBar, QStatusBar, QFileDialog,
-    QSplitter, QGroupBox, QGridLayout, QProgressBar, QMessageBox,
+    QAction, QToolBar, QFileDialog,
+    QSplitter, QProgressBar, QMessageBox,
     QComboBox, QSpinBox, QDoubleSpinBox, QDialog, QFormLayout,
-    QDialogButtonBox, QTextEdit, QFrame, QSizePolicy, QStyle,
-    QCheckBox, QTabWidget, QScrollArea, QGraphicsDropShadowEffect
+    QDialogButtonBox, QFrame, QSizePolicy,
+    QScrollArea,
 )
 from PyQt5.QtCore import (
-    Qt, QTimer, QSize, QThread, pyqtSignal, QMimeData, QUrl,
-    QPropertyAnimation, QEasingCurve, QPoint
+    Qt, QTimer, QThread, pyqtSignal,
 )
 from PyQt5.QtGui import (
-    QPixmap, QImage, QIcon, QFont, QColor, QPalette,
-    QPainter, QPen, QBrush, QDragEnterEvent, QDropEvent,
-    QLinearGradient, QRadialGradient
+    QPixmap, QImage, QIcon, QFont, QColor,
+    QDragEnterEvent, QDropEvent,
 )
 
 
@@ -67,6 +61,8 @@ COLOR_ACCENT         = "#4a9eff"   # 唯一强调色
 COLOR_OK             = "#4ade80"   # 合格
 COLOR_ERR            = "#f87171"   # 不合格
 COLOR_WARN           = "#fbbf24"   # 警告
+COLOR_ERR_BG         = "#3d1a1a"   # 红色背景（计时器警告）
+COLOR_WARN_BG         = "#3d2e0a"   # 黄色背景（计时器提示）
 
 
 # ============================================================
@@ -618,7 +614,7 @@ class SteelDefectApp(QMainWindow):
 
         self.defect_bars = {}
         for class_name, class_name_cn in zip(CLASS_NAMES, CLASS_NAMES_CN):
-            bar_widget = self._create_defect_bar(class_name, class_name_cn)
+            bar_widget = self._create_defect_bar(class_name_cn)
             defect_layout.addWidget(bar_widget)
             self.defect_bars[class_name] = bar_widget
         layout.addWidget(defect_frame)
@@ -785,7 +781,7 @@ class SteelDefectApp(QMainWindow):
 
         return card
 
-    def _create_defect_bar(self, class_name, class_name_cn):
+    def _create_defect_bar(self, class_name_cn):
         """创建缺陷分布条（紧凑版）"""
         widget = QWidget()
         layout = QHBoxLayout(widget)
@@ -2041,7 +2037,7 @@ class VideoStreamThread(QThread):
 
                 self.frame_ready.emit(pixmap, result)
 
-            except Exception as e:
+            except Exception:
                 rgb_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgb_img.shape
                 bytes_per_line = ch * w
