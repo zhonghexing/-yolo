@@ -31,9 +31,59 @@ from typing import List, Optional, Union
 import cv2
 import numpy as np
 import torch
+from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
 
 from constants import CLASS_NAMES, CLASS_NAMES_CN, CLASS_COLORS_BGR as CLASS_COLORS
+
+
+# ============================================================
+# 中文字体工具
+# ============================================================
+
+def _get_cn_font(size: int = 20):
+    """获取支持中文的字体"""
+    font_paths = [
+        "C:/Windows/Fonts/msyh.ttc",       # 微软雅黑
+        "C:/Windows/Fonts/simhei.ttf",      # 黑体
+        "C:/Windows/Fonts/simsun.ttc",      # 宋体
+        "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",  # Linux
+        "/System/Library/Fonts/PingFang.ttc",  # macOS
+    ]
+    for fp in font_paths:
+        if os.path.exists(fp):
+            try:
+                return ImageFont.truetype(fp, size)
+            except Exception:
+                continue
+    return ImageFont.load_default()
+
+
+def _put_cn_text(
+    img: np.ndarray,
+    text: str,
+    pos: tuple,
+    font_size: int = 20,
+    color: tuple = (255, 255, 255),
+    bg_color: tuple = None,
+    thickness: int = 1,
+) -> np.ndarray:
+    """用 PIL 在图片上绘制中文文字，返回新图片"""
+    pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(pil_img)
+    font = _get_cn_font(font_size)
+
+    x, y = pos
+    if bg_color is not None:
+        bbox = draw.textbbox((x, y), text, font=font)
+        pad = 2
+        draw.rectangle(
+            [bbox[0] - pad, bbox[1] - pad, bbox[2] + pad, bbox[3] + pad],
+            fill=bg_color,
+        )
+
+    draw.text((x, y), text, font=font, fill=color[::-1])  # PIL 用 RGB
+    return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
 
 # ============================================================
@@ -493,54 +543,37 @@ class ScrewDefectDetector:
             # 绘制边界框
             cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
 
-            # 构造标签文本
+            # 构造标签文本（中文名 + 置信度）
             label = f"{det.class_name_cn} {det.confidence:.0%}"
 
-            # 计算标签背景大小
-            (label_w, label_h), baseline = cv2.getTextSize(
-                label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2
-            )
-
-            # 绘制标签背景
-            cv2.rectangle(
-                img,
-                (x1, y1 - label_h - baseline - 4),
-                (x1 + label_w, y1),
-                color,
-                -1,  # 填充
-            )
-
-            # 绘制标签文字（白色）
-            cv2.putText(
+            # 用 PIL 绘制中文标签
+            img = _put_cn_text(
                 img, label,
-                (x1, y1 - baseline - 2),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (255, 255, 255),
-                2,
-                cv2.LINE_AA,
+                pos=(x1 + 2, y1 - 20),
+                font_size=14,
+                color=(255, 255, 255),
+                bg_color=color,
             )
 
-        # 绘制整体判定信息
-        info_text = f"Result: {result.overall_verdict}"
-        time_text = f"Inference: {result.inference_time_ms:.1f}ms"
+        # 绘制整体判定信息（左上角小文字）
+        info_text = f"{result.overall_verdict}"
+        time_text = f"{result.inference_time_ms:.1f}ms"
 
-        # 顶部信息栏背景
-        cv2.rectangle(img, (0, 0), (img.shape[1], 50), (0, 0, 0), -1)
-
-        # 整体判定
         verdict_color = (0, 200, 0) if not result.has_defect else (0, 0, 255)
-        cv2.putText(
+        img = _put_cn_text(
             img, info_text,
-            (10, 20),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.6, verdict_color, 2, cv2.LINE_AA,
+            pos=(4, 2),
+            font_size=11,
+            color=verdict_color,
+            bg_color=(0, 0, 0),
         )
 
-        # 推理耗时
-        cv2.putText(
+        img = _put_cn_text(
             img, time_text,
-            (10, 42),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1, cv2.LINE_AA,
+            pos=(4, 18),
+            font_size=10,
+            color=(180, 180, 180),
+            bg_color=(0, 0, 0),
         )
 
         # 保存图片

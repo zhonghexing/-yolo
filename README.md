@@ -2,208 +2,189 @@
 
 ## 项目概述
 
-本项目是参加"基于AI视觉的行业应用创新赛"的竞赛作品，旨在构建一套高效、准确的钢材表面缺陷视觉检测系统。系统采用YOLOv8深度学习模型，能够自动识别和分类钢材表面的多种缺陷类型，实现工业生产线上的自动化质量检测。
+本项目是参加"基于AI视觉的行业应用创新赛"的竞赛作品，基于 YOLOv8 深度学习模型，自动识别和分类钢材表面的 6 种常见缺陷，提供 PyQt5 桌面应用和命令行两种操作方式。
 
-### 项目亮点
+### 核心特性
 
-- **高精度检测**：基于YOLOv8先进的目标检测架构，目标95%以上的检测准确率
-- **多缺陷识别**：支持6种缺陷类型的实时分类检测（龟裂、夹杂、斑块、麻点、氧化皮、划痕）
-- **快速推理**：单张图像推理时间<100ms，满足实时检测需求
-- **桌面应用**：提供友好的PyQt5 GUI界面，便于工业现场操作使用
-- **竞赛达标**：满足20个样本/180秒的检测效率要求
+- **6 类缺陷检测**：龟裂、夹杂、斑块、麻点、氧化皮、划痕
+- **三种检测模式**：图片检测、摄像头实时检测、视频文件检测
+- **现代化 UI**：深色主题 + 工业风配色，左右分栏布局，支持拖放
+- **一键部署**：26MB 部署包，解压双击即可运行
 
 ## 技术栈
 
-| 类别 | 技术选型 | 说明 |
-|------|----------|------|
-| 深度学习框架 | PyTorch 2.x | 模型训练与推理 |
-| 目标检测模型 | YOLOv8 (Ultralytics) | 最新的YOLO系列检测模型 |
-| GUI框架 | PyQt5 / Tkinter | 桌面应用界面开发 |
-| 数据处理 | OpenCV, Pillow | 图像预处理与增强 |
-| 模型导出 | ONNX, TensorRT | 模型格式转换与加速 |
+| 类别 | 技术 |
+|------|------|
+| 深度学习框架 | PyTorch 2.12 + Ultralytics 8.4 |
+| 检测模型 | YOLOv8s（部署）/ YOLOv8m（训练） |
+| 桌面 GUI | PyQt5 |
+| 图像处理 | OpenCV, Pillow |
+| 模型导出 | ONNX, TensorRT（export_model.py） |
 
-## 缺陷类型定义
+## 缺陷类型
 
-本系统检测以下6种钢材表面缺陷类型（NEU-DET数据集）：
-
-| 编号 | 类别名称 | 英文标识 | 说明 |
-|------|----------|----------|------|
-| 0 | 龟裂 | crazing | 钢材表面裂纹缺陷 |
-| 1 | 夹杂 | inclusion | 材料内部夹杂物 |
-| 2 | 斑块 | patches | 表面斑块状缺陷 |
-| 3 | 麻点 | pitted_surface | 表面麻点状缺陷 |
-| 4 | 氧化皮 | rolled-in_scale | 轧制氧化皮缺陷 |
-| 5 | 划痕 | scratches | 表面划痕缺陷 |
+| 编号 | 类别 | 英文 | 框颜色 |
+|------|------|------|--------|
+| 0 | 龟裂 | crazing | 红色 |
+| 1 | 夹杂 | inclusion | 橙色 |
+| 2 | 斑块 | patches | 黄绿色 |
+| 3 | 麻点 | pitted_surface | 紫红色 |
+| 4 | 氧化皮 | rolled-in_scale | 深橙色 |
+| 5 | 划痕 | scratches | 天蓝色 |
 
 ## 项目结构
 
 ```
 D:/yolo/
-├── README.md                    # 项目说明文档
-├── app.py                       # PyQt5 桌面应用主程序
-├── inference.py                 # 推理引擎核心模块
-├── train.py                     # 模型训练脚本
-├── evaluate.py                  # 模型评估脚本
-├── demo.py                      # 竞赛演示脚本
-├── export_model.py              # 模型导出脚本
-├── feedback.py                  # 反馈机制模块（视觉+语音+日志）
-├── visualization.py             # 可视化模块
-├── run_app.py                   # 应用启动脚本
-├── check_gpu.py                 # GPU状态检查
-├── docs/                        # 项目文档目录
-│   ├── requirements.md          # 需求分析文档
-│   ├── architecture.md          # 系统架构设计
-│   ├── dataset.md               # 数据集规范
-│   ├── training.md              # 模型训练方案
-│   ├── deployment.md            # 部署方案
-│   └── testing.md               # 测试方案
-├── datasets/                    # 数据集目录
-│   ├── neu_det/                 # NEU-DET钢材缺陷数据集
-│   │   ├── data.yaml            # 数据集配置
-│   │   ├── train/               # 训练集 (1296张)
-│   │   ├── val/                 # 验证集 (324张)
-│   │   └── test/                # 测试集 (180张)
-│   └── screws/                  # 螺丝数据集（备用）
-├── runs/                        # 训练运行结果
-│   └── train/
-│       └── screw_defect_cpu/    # CPU训练结果
-│           └── weights/
-│               ├── best.pt      # 最佳模型
-│               └── last.pt      # 最新模型
-├── tools/                       # 工具脚本
-│   ├── data_augment.py          # 数据增强
-│   ├── generate_sample_data.py  # 样本生成
-│   ├── labelme_to_yolo.py       # 标注格式转换
-│   └── split_dataset.py         # 数据集划分
-├── requirements.txt             # Python依赖
-├── environment.yml              # Conda环境配置
-└── setup_env.bat                # 环境设置脚本
+├── app.py                  # PyQt5 桌面应用主程序
+├── inference.py            # 推理引擎核心
+├── train.py                # 训练脚本
+├── train_optimized.py      # 优化版训练（v3）
+├── train_v1_optimized.py   # v1 优化训练
+├── evaluate.py             # 模型评估
+├── demo.py                 # 竞赛演示（20样本/180秒）
+├── export_model.py         # 模型导出（ONNX/TensorRT）
+├── feedback.py             # 反馈模块（语音+视觉+日志）
+├── visualization.py        # 可视化报告
+├── constants.py            # 类别名称和颜色常量
+├── compare_models.py       # 模型对比工具
+├── check_gpu.py            # GPU 状态检查
+├── monitor_and_test.py     # 训练监控 + 自动测试
+├── run_app.py              # 应用启动器（环境检查）
+├── build_desktop.spec      # PyInstaller 打包配置
+├── app_icon.ico            # 应用图标
+├── requirements.txt        # Python 依赖
+├── environment.yml         # Conda 环境配置
+├── yolov8n.pt / yolov8s.pt / yolov8m.pt  # 预训练基础模型
+├── 基于AI视觉的工业零件缺陷检测方案.pptx  # 竞赛答辩 PPT
+├── datasets/
+│   └── neu_det/            # NEU-DET 钢材缺陷数据集
+│       ├── data.yaml
+│       ├── train/images/   # 1864 张（增强后）
+│       ├── val/images/     # 324 张
+│       └── test/images/    # 180 张
+├── deploy/                 # 部署包源文件
+│   ├── app.py              # GUI 主程序
+│   ├── inference.py        # 推理引擎
+│   ├── best.pt             # v1 模型 (YOLOv8s, mAP50=0.768)
+│   ├── yolov8n.pt          # 备用模型
+│   ├── README.md           # 部署文档
+│   ├── test_images/        # 4 张测试图
+│   └── *.bat               # 一键启动脚本
+├── deploy_package.zip      # 部署包 (26MB)
+├── runs/
+│   ├── train/              # 训练结果（v1/v2/v3/v1_optimized）
+│   ├── detect/             # 检测结果
+│   ├── eval/               # 评估报告
+│   └── demo/               # 演示结果
+├── tools/                  # 工具脚本（增强/标注/划分）
+└── docs/                   # 项目文档
 ```
 
 ## 快速开始
 
-### 环境配置
+### 环境配置（开发机）
 
 ```bash
 # 1. 创建 Conda 环境
 conda create -n yolo_screw python=3.10
 conda activate yolo_screw
 
-# 2. 安装 PyTorch (CUDA 12.8)
-pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu128
+# 2. 安装 PyTorch (CUDA)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 
 # 3. 安装依赖
 pip install -r requirements.txt
 
-# 4. 验证安装
-python -c "import ultralytics; print(ultralytics.__version__)"
+# 4. 验证
 python check_gpu.py
 ```
 
 ### 模型训练
 
 ```bash
-# GPU训练（推荐）
-python train.py --epochs 100 --batch 16 --device 0
+# 默认训练（yolov8m, 100 epochs）
+python train.py
 
-# CPU训练
-python train.py --epochs 100 --batch 8 --device cpu
+# 指定模型和参数
+python train.py --model yolov8s.pt --epochs 150 --batch 16
+
+# 恢复训练
+python train.py --resume runs/train/screw_defect_v2/weights/last.pt
+
+# 优化训练
+python train_optimized.py --model runs/train/screw_defect_v2/weights/best.pt
 ```
 
 ### 启动应用
 
 ```bash
-# 启动GUI应用
-python run_app.py
-
-# 或直接运行
-python app.py
+python app.py            # 直接启动 GUI
+python run_app.py        # 带环境检查启动
 ```
 
-### 运行演示
+### 推理检测
 
 ```bash
-# 竞赛演示模式（20样本/180秒）
-python demo.py --samples 20 --limit 180
+# 单张图片
+python inference.py --image test.jpg
+
+# 批量检测
+python inference.py --dir datasets/neu_det/test/images
+
+# 比赛演示
+python demo.py --real --dir datasets/neu_det/test/images --samples 20
 ```
 
 ### 模型导出
 
 ```bash
-# 导出为ONNX格式
 python export_model.py --format onnx
-
-# 导出为TorchScript格式
-python export_model.py --format torchscript
 ```
 
-## 性能指标
+## 模型版本
 
-### 检测精度（目标）
+| 版本 | 模型 | 大小 | mAP@0.5 | 说明 |
+|------|------|------|---------|------|
+| v1 (screw_defect-11) | YOLOv8s | 21.5 MB | **0.768** | ★ 当前部署版本 |
+| v2 (screw_defect_v2) | YOLOv8m | 197.9 MB | — | 大模型基线 |
+| v3 (v3_optimized) | YOLOv8m | 49.7 MB | 0.675 | 优化参数训练 |
+| v1_optimized | YOLOv8s | 21.5 MB | — | v1 优化尝试 |
 
-| 指标 | 目标值 | 当前值 | 说明 |
-|------|--------|--------|------|
-| mAP@0.5 | ≥95% | 训练中 | IoU阈值为0.5时的平均精度 |
-| mAP@0.5:0.95 | ≥85% | 训练中 | IoU阈值0.5-0.95的平均精度 |
-| Precision | ≥95% | 训练中 | 精确率 |
-| Recall | ≥94% | 训练中 | 召回率 |
+### v3 各类别 AP@0.5
 
-### 各类别检测性能（目标）
+| 类别 | AP@0.5 |
+|------|--------|
+| scratches（划痕） | 0.899 |
+| patches（斑块） | 0.867 |
+| pitted_surface（麻点） | 0.827 |
+| inclusion（夹杂） | 0.684 |
+| rolled-in_scale（氧化皮） | 0.508 |
+| crazing（龟裂） | 0.264 |
 
-| 缺陷类型 | Precision | Recall | mAP@0.5 |
-|----------|-----------|--------|---------|
-| 龟裂 | ≥93% | ≥92% | ≥94% |
-| 夹杂 | ≥95% | ≥94% | ≥96% |
-| 斑块 | ≥96% | ≥95% | ≥97% |
-| 麻点 | ≥95% | ≥94% | ≥96% |
-| 氧化皮 | ≥94% | ≥93% | ≥95% |
-| 划痕 | ≥96% | ≥95% | ≥97% |
+## 部署
 
-### 推理速度（目标）
+将 `deploy_package.zip`（26MB）复制到目标电脑，解压后：
+1. 确保已安装 Python 3.10+
+2. 双击 `启动检测系统.bat` → 自动安装依赖 → 启动 GUI
+3. 或先双击 `测试环境.bat` 检查环境
 
-| 设备 | 单张推理时间 | 批量处理(20张) | FPS |
-|------|-------------|----------------|-----|
-| RTX 5070 GPU | <20ms | <2s | >50 |
-| CPU (i7) | <100ms | <5s | >10 |
+**部署目标**：i5-1240P + 16GB RAM（CPU 推理，~100ms/张）
 
-## 竞赛指标达成
+## 文档
 
-| 竞赛要求 | 目标值 | 当前状态 | 备注 |
-|----------|--------|----------|------|
-| 检测样本数 | 20个 | 待测试 | demo.py支持 |
-| 检测时间 | ≤180秒 | 待测试 | 目标<30秒 |
-| 检测准确率 | ≥95% | 训练中 | 需要完成训练 |
-| 桌面应用演示 | 必需 | 已完成 | app.py可用 |
-
-## 文档目录
-
-- [需求分析文档](docs/requirements.md) - 详细的系统需求分析
-- [系统架构设计](docs/architecture.md) - 整体架构与模块设计
-- [数据集规范](docs/dataset.md) - 数据集构建与标注规范
-- [模型训练方案](docs/training.md) - 训练策略与超参数配置
-- [部署方案](docs/deployment.md) - 模型部署与优化方案
-- [测试方案](docs/testing.md) - 系统测试与验证方案
-
-## 团队成员
-
-| 角色 | 职责 |
-|------|------|
-| 项目负责人 | 整体规划与协调 |
-| 算法工程师 | 模型选型与训练 |
-| 数据工程师 | 数据采集与标注 |
-| 软件工程师 | GUI开发与系统集成 |
-| 测试工程师 | 系统测试与质量保证 |
+- [部署文档](deploy/README.md) — 部署和使用说明
+- [需求分析](docs/requirements.md)
+- [系统架构](docs/architecture.md)
+- [数据集规范](docs/dataset.md)
+- [训练方案](docs/training.md)
+- [部署方案](docs/deployment.md)
+- [测试方案](docs/testing.md)
 
 ## 许可证
 
-本项目仅用于学术竞赛目的，代码和模型仅供参考学习使用。
-
-## 联系方式
-
-如有问题或建议，请通过以下方式联系：
-- 项目仓库：[GitHub链接]
-- 邮箱：[联系邮箱]
+本项目仅用于学术竞赛目的。
 
 ---
 
-**项目状态**：开发中 | **最后更新**：2026年5月28日
+**项目状态**：已完成 | **最后更新**：2026年5月30日

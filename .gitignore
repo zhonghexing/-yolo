@@ -37,6 +37,27 @@ logs/
 .DS_Store
 Thumbs.db
 
-# YOLO
+# YOLO base models (keep these)
 *.pt
 !yolov8m.pt
+!yolov8s.pt
+!yolov8n.pt
+
+# Deploy models (included in deploy package)
+!deploy/best.pt
+!deploy/yolov8n.pt
+
+# Build artifacts
+build/
+dist/
+deploy_package.zip
+deploy_package.tar.gz
+deploy_web.tar.gz
+*.tar.gz
+
+# Screenshots / temp images
+*.png
+!runs/**/*.png
+
+# PPT (large binary, keep if needed)
+# !*.pptx
