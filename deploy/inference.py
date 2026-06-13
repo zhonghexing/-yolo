@@ -1,5 +1,5 @@
 """
-螺丝缺陷检测推理引擎核心模块
+钢材缺陷检测推理引擎核心模块
 Screw Defect Detection Inference Engine
 
 功能：
@@ -38,11 +38,21 @@ from constants import CLASS_NAMES, CLASS_NAMES_CN, CLASS_COLORS_BGR as CLASS_COL
 
 
 # ============================================================
-# 中文字体工具
+# 中文字体工具（带缓存优化）
 # ============================================================
 
-def _get_cn_font(size: int = 20):
-    """获取支持中文的字体"""
+# 字体缓存：避免每次调用都重新加载字体文件
+_font_cache = {}
+# 字体路径列表（只查找一次）
+_font_path_cache = None
+
+
+def _find_font_path():
+    """查找可用的中文字体路径（结果缓存）"""
+    global _font_path_cache
+    if _font_path_cache is not None:
+        return _font_path_cache
+
     font_paths = [
         "C:/Windows/Fonts/msyh.ttc",       # 微软雅黑
         "C:/Windows/Fonts/simhei.ttf",      # 黑体
@@ -52,11 +62,29 @@ def _get_cn_font(size: int = 20):
     ]
     for fp in font_paths:
         if os.path.exists(fp):
-            try:
-                return ImageFont.truetype(fp, size)
-            except Exception:
-                continue
-    return ImageFont.load_default()
+            _font_path_cache = fp
+            return fp
+    _font_path_cache = ""
+    return ""
+
+
+def _get_cn_font(size: int = 20):
+    """获取支持中文的字体（带缓存）"""
+    if size in _font_cache:
+        return _font_cache[size]
+
+    font_path = _find_font_path()
+    if font_path:
+        try:
+            font = ImageFont.truetype(font_path, size)
+            _font_cache[size] = font
+            return font
+        except Exception:
+            pass
+
+    font = ImageFont.load_default()
+    _font_cache[size] = font
+    return font
 
 
 def _put_cn_text(
@@ -68,7 +96,7 @@ def _put_cn_text(
     bg_color: tuple = None,
     thickness: int = 1,
 ) -> np.ndarray:
-    """用 PIL 在图片上绘制中文文字，返回新图片"""
+    """用 PIL 在图片上绘制中文文字，返回新图片（单次调用，兼容旧代码）"""
     pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     draw = ImageDraw.Draw(pil_img)
     font = _get_cn_font(font_size)
@@ -83,6 +111,57 @@ def _put_cn_text(
         )
 
     draw.text((x, y), text, font=font, fill=color[::-1])  # PIL 用 RGB
+    return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+
+
+def draw_detections_cn(
+    img: np.ndarray,
+    detections: list,
+    font_size: int = 16,
+) -> np.ndarray:
+    """批量绘制所有检测框的中文标签（只做一次颜色空间转换，性能优化）
+
+    Args:
+        img: BGR 格式的图片
+        detections: SingleDetection 对象列表
+        font_size: 字体大小
+
+    Returns:
+        绘制了检测框和标签的 BGR 图片
+    """
+    if not detections:
+        return img
+
+    # 只做一次 BGR -> RGB 转换
+    pil_img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    draw = ImageDraw.Draw(pil_img)
+    font = _get_cn_font(font_size)
+
+    for det in detections:
+        x1, y1, x2, y2 = [int(c) for c in det.bbox]
+        # BGR -> RGB for PIL
+        color_bgr = (0, 0, 255) if det.is_defect else (0, 200, 0)
+        color_rgb = color_bgr[::-1]
+
+        # 画矩形框
+        draw.rectangle([x1, y1, x2, y2], outline=color_rgb, width=2)
+
+        # 标签文字
+        label = f"{det.class_name_cn} {det.confidence:.0%}"
+        label_pos = (x1 + 2, y1 - 22)
+
+        # 计算文字边界并绘制背景
+        bbox = draw.textbbox(label_pos, label, font=font)
+        pad = 2
+        draw.rectangle(
+            [bbox[0] - pad, bbox[1] - pad, bbox[2] + pad, bbox[3] + pad],
+            fill=color_rgb,
+        )
+
+        # 绘制文字（白色）
+        draw.text(label_pos, label, font=font, fill=(255, 255, 255))
+
+    # 只做一次 RGB -> BGR 转换
     return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
 
@@ -153,7 +232,7 @@ class ImageDetectionResult:
 
 class ScrewDefectDetector:
     """
-    螺丝缺陷检测器
+    钢材缺陷检测器
 
     基于 YOLOv8 模型的推理引擎，支持 GPU/CPU 自动切换，
     提供单张和批量检测能力。
@@ -229,7 +308,7 @@ class ScrewDefectDetector:
                 self.model_path = fallback
             else:
                 print(f"[推理引擎] 警告: 模型文件不存在: {self.model_path}")
-                print("[推理引擎] 将使用 YOLOv8n 预训练模型（未针对螺丝缺陷微调）")
+                print("[推理引擎] 将使用 YOLOv8n 预训练模型（未针对钢材缺陷微调）")
                 self.model_path = Path("yolov8n.pt")
 
         print(f"[推理引擎] 加载模型: {self.model_path}")
@@ -241,18 +320,16 @@ class ScrewDefectDetector:
     def _find_best_model(self) -> Optional[Path]:
         """在项目目录中查找最佳训练模型"""
         root = Path(__file__).parent.absolute()
-
-        # 优先检查项目根目录下的 best.pt
-        root_best = root / "best.pt"
-        if root_best.exists():
-            return root_best
-
         runs_dir = root / "runs" / "train"
-        if runs_dir.exists():
-            best_models = list(runs_dir.glob("*/weights/best.pt"))
-            if best_models:
-                best_models.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-                return best_models[0]
+
+        if not runs_dir.exists():
+            return None
+
+        best_models = list(runs_dir.glob("*/weights/best.pt"))
+        if best_models:
+            # 按修改时间排序，返回最新的
+            best_models.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+            return best_models[0]
 
         return None
 
@@ -628,17 +705,20 @@ def find_best_model(project_root: Optional[str] = None) -> Optional[Path]:
     else:
         root = Path(project_root)
 
-    # 优先检查项目根目录下的 best.pt
+    # 优先使用项目根目录下的 best.pt
     root_best = root / "best.pt"
     if root_best.exists():
         return root_best
 
+    # 其次在 runs/train 目录下查找
     runs_dir = root / "runs" / "train"
-    if runs_dir.exists():
-        best_models = list(runs_dir.glob("*/weights/best.pt"))
-        if best_models:
-            best_models.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-            return best_models[0]
+    if not runs_dir.exists():
+        return None
+
+    best_models = list(runs_dir.glob("*/weights/best.pt"))
+    if best_models:
+        best_models.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        return best_models[0]
 
     return None
 
@@ -674,7 +754,7 @@ def get_model_path(model_arg: str = "") -> str:
 
 def parse_args():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description="螺丝缺陷检测推理引擎")
+    parser = argparse.ArgumentParser(description="钢材缺陷检测推理引擎")
 
     parser.add_argument(
         "--model", type=str, default="",

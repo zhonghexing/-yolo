@@ -21,8 +21,8 @@ from pathlib import Path
 def print_banner():
     """打印启动横幅"""
     print("=" * 60)
-    print("  钢材缺陷检测系统 v3.0")
-    print("  Steel Defect Detection System")
+    print("  钢材缺陷检测系统 v1.0.0")
+    print("  Screw Defect Detection System")
     print("=" * 60)
     print()
 

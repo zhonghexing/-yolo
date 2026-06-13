@@ -1,5 +1,5 @@
 """
-螺丝缺陷检测可视化模块
+钢材缺陷检测可视化模块
 Screw Defect Detection Visualization Module
 
 功能：
@@ -120,7 +120,7 @@ class StatisticsVisualizer:
             autotext.set_fontsize(10)
             autotext.set_fontweight('bold')
 
-        ax.set_title('螺丝缺陷类型分布', fontsize=16, fontweight='bold', pad=20)
+        ax.set_title('钢材缺陷类型分布', fontsize=16, fontweight='bold', pad=20)
 
         save_path = str(self.output_dir / save_name)
         plt.tight_layout()
@@ -387,11 +387,17 @@ class ConfusionMatrixVisualizer:
             print("[可视化] 警告: 真实标签和预测标签数量不匹配")
             return ""
 
-        # 构建混淆矩阵
-        cm = np.zeros((n_classes, n_classes), dtype=int)
+        # 构建混淆矩阵（包含 normal 行）
+        # 行：true_cls (0..n_classes-1 为缺陷，n_classes 为 normal)
+        # 列：pred_cls (-1 表示无检测，0..n_classes-1 为缺陷类别)
+        cm = np.zeros((n_classes + 1, n_classes + 1), dtype=int)
         for true_cls, pred_cls in zip(y_true, y_pred):
-            if 0 <= true_cls < n_classes and 0 <= pred_cls < n_classes:
-                cm[true_cls][pred_cls] += 1
+            # 真实类别索引：-1 表示 normal，使用最后一行
+            true_idx = true_cls if true_cls >= 0 else n_classes
+            # 预测类别索引：-1 表示无检测，使用最后一列
+            pred_idx = pred_cls if pred_cls >= 0 else n_classes
+            if 0 <= true_idx <= n_classes and 0 <= pred_idx <= n_classes:
+                cm[true_idx][pred_idx] += 1
 
         return self._render_confusion_matrix(cm, save_name)
 
@@ -416,7 +422,12 @@ class ConfusionMatrixVisualizer:
 
         # 归一化
         row_sums = cm.sum(axis=1, keepdims=True)
-        cm_norm = np.divide(cm.astype(float), row_sums, where=row_sums != 0)
+        cm_norm = np.zeros_like(cm, dtype=float)
+        np.divide(cm.astype(float), row_sums, out=cm_norm, where=row_sums != 0)
+
+        # 构建标签列表（包含正常和未检出）
+        labels = CLASS_NAMES_CN_LIST + ['正常']
+        pred_labels = CLASS_NAMES_CN_LIST + ['未检出']
 
         fig, axes = plt.subplots(1, 2, figsize=(20, 8))
 
@@ -427,8 +438,8 @@ class ConfusionMatrixVisualizer:
 
         # 标注数值
         thresh = cm.max() / 2.0
-        for i in range(n_classes):
-            for j in range(n_classes):
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
                 color = 'white' if cm[i, j] > thresh else 'black'
                 axes[0].text(
                     j, i, str(cm[i, j]),
@@ -436,10 +447,10 @@ class ConfusionMatrixVisualizer:
                     color=color, fontsize=12, fontweight='bold',
                 )
 
-        axes[0].set_xticks(range(n_classes))
-        axes[0].set_yticks(range(n_classes))
-        axes[0].set_xticklabels(CLASS_NAMES_CN_LIST, rotation=45, ha='right', fontsize=10)
-        axes[0].set_yticklabels(CLASS_NAMES_CN_LIST, fontsize=10)
+        axes[0].set_xticks(range(len(pred_labels)))
+        axes[0].set_yticks(range(len(labels)))
+        axes[0].set_xticklabels(pred_labels, rotation=45, ha='right', fontsize=10)
+        axes[0].set_yticklabels(labels, fontsize=10)
         axes[0].set_xlabel('预测类别', fontsize=12)
         axes[0].set_ylabel('真实类别', fontsize=12)
 
@@ -448,8 +459,8 @@ class ConfusionMatrixVisualizer:
         axes[1].set_title('混淆矩阵 (归一化)', fontsize=14, fontweight='bold')
         fig.colorbar(im2, ax=axes[1], fraction=0.046, pad=0.04)
 
-        for i in range(n_classes):
-            for j in range(n_classes):
+        for i in range(cm_norm.shape[0]):
+            for j in range(cm_norm.shape[1]):
                 val = cm_norm[i, j]
                 color = 'white' if val > 0.5 else 'black'
                 axes[1].text(
@@ -458,10 +469,10 @@ class ConfusionMatrixVisualizer:
                     color=color, fontsize=12, fontweight='bold',
                 )
 
-        axes[1].set_xticks(range(n_classes))
-        axes[1].set_yticks(range(n_classes))
-        axes[1].set_xticklabels(CLASS_NAMES_CN_LIST, rotation=45, ha='right', fontsize=10)
-        axes[1].set_yticklabels(CLASS_NAMES_CN_LIST, fontsize=10)
+        axes[1].set_xticks(range(len(pred_labels)))
+        axes[1].set_yticks(range(len(labels)))
+        axes[1].set_xticklabels(pred_labels, rotation=45, ha='right', fontsize=10)
+        axes[1].set_yticklabels(labels, fontsize=10)
         axes[1].set_xlabel('预测类别', fontsize=12)
         axes[1].set_ylabel('真实类别', fontsize=12)
 
@@ -631,7 +642,7 @@ class ReportGenerator:
 
         lines = [
             "=" * 60,
-            "螺丝缺陷检测报告",
+            "钢材缺陷检测报告",
             "=" * 60,
             "",
             f"总样本数:       {total}",
@@ -668,7 +679,7 @@ class ReportGenerator:
 # ============================================================
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="螺丝缺陷检测可视化工具")
+    parser = argparse.ArgumentParser(description="钢材缺陷检测可视化工具")
     parser.add_argument(
         "--log", type=str, default="",
         help="检测日志 CSV 文件路径"

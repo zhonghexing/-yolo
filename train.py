@@ -1,6 +1,8 @@
 """
-YOLOv8 螺丝缺陷检测训练脚本
-Screw Defect Detection Training Script
+YOLOv8 钢材表面缺陷检测训练脚本
+Steel Surface Defect Detection Training Script
+
+基于 v1 (screw_defect-11) 最佳参数配置，mAP@0.5 = 0.761
 
 使用方法：
     python train.py                          # 使用默认参数训练（yolov8s, 150 epochs）
@@ -46,18 +48,18 @@ def get_dataset_config():
 
 def parse_args():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description="YOLOv8 螺丝缺陷检测训练")
+    parser = argparse.ArgumentParser(description="YOLOv8 钢材表面缺陷检测训练")
 
     # 模型参数
     parser.add_argument(
-        "--model", type=str, default="yolov8m.pt",
-        help="预训练模型路径 (默认: yolov8m.pt)"
+        "--model", type=str, default="yolov8s.pt",
+        help="预训练模型路径 (默认: yolov8s.pt)"
     )
 
     # 训练参数
     parser.add_argument("--epochs", type=int, default=150, help="训练轮数 (默认: 150)")
-    parser.add_argument("--batch", type=int, default=16, help="批量大小 (默认: 16)")
-    parser.add_argument("--imgsz", type=int, default=1024, help="输入图片尺寸 (默认: 1024)")
+    parser.add_argument("--batch", type=int, default=32, help="批量大小 (默认: 32)")
+    parser.add_argument("--imgsz", type=int, default=800, help="输入图片尺寸 (默认: 800)")
     parser.add_argument("--lr0", type=float, default=0.001, help="初始学习率 (默认: 0.001)")
     parser.add_argument("--lrf", type=float, default=0.01, help="最终学习率比例 (默认: 0.01)")
 
@@ -67,14 +69,14 @@ def parse_args():
     parser.add_argument("--mixup", type=float, default=0.1, help="MixUp增强概率 (默认: 0.1)")
 
     # 训练控制
-    parser.add_argument("--patience", type=int, default=30, help="早停耐心值 (默认: 30)")
+    parser.add_argument("--patience", type=int, default=50, help="早停耐心值 (默认: 50)")
     parser.add_argument("--workers", type=int, default=2, help="数据加载线程数 (默认: 2)")
     parser.add_argument("--device", type=str, default="", help="训练设备 (默认: 自动选择)")
     parser.add_argument("--resume", type=str, default="", help="恢复训练的检查点路径")
 
     # 输出控制
     parser.add_argument("--project", type=str, default="runs/train", help="项目保存目录")
-    parser.add_argument("--name", type=str, default="screw_defect_v2", help="实验名称")
+    parser.add_argument("--name", type=str, default="screw_defect", help="实验名称")
     parser.add_argument("--exist-ok", action="store_true", help="覆盖已有实验目录")
 
     return parser.parse_args()
@@ -105,7 +107,7 @@ def train(args):
     else:
         model = YOLO(args.model)
 
-    # 训练参数配置
+    # 训练参数配置（基于 v1 最佳参数，mAP@0.5=0.761）
     train_args = {
         # 数据集
         "data": data_yaml,
@@ -133,39 +135,44 @@ def train(args):
         "exist_ok": args.exist_ok,
 
         # 优化器配置
-        "optimizer": "AdamW",          # 优化器
-        "momentum": 0.937,             # SGD动量
-        "weight_decay": 0.0005,        # 权重衰减
-        "warmup_epochs": 3.0,          # 预热轮数
-        "warmup_momentum": 0.8,        # 预感动量
-        "warmup_bias_lr": 0.1,         # 预热偏置学习率
+        "optimizer": "AdamW",
+        "momentum": 0.937,
+        "weight_decay": 0.0005,
+        "warmup_epochs": 3.0,
+        "warmup_momentum": 0.8,
+        "warmup_bias_lr": 0.1,
 
         # 损失函数权重
-        "box": 7.5,                    # 边界框损失权重
-        "cls": 0.5,                    # 分类损失权重
-        "dfl": 1.5,                    # DFL权重
+        "box": 7.5,
+        "cls": 0.5,
+        "dfl": 1.5,
 
         # 学习率调度
-        "cos_lr": True,                # 余弦退火学习率
+        "cos_lr": True,
 
         # 数据增强
-        "close_mosaic": 10,            # 最后10轮关闭Mosaic
-        "degrees": 10.0,               # 旋转角度
-        "translate": 0.1,              # 平移范围
-        "scale": 0.5,                  # 缩放范围
-        "fliplr": 0.5,                 # 左右翻转
-        "hsv_h": 0.015,                # 色调增强
-        "hsv_s": 0.7,                  # 饱和度增强
-        "hsv_v": 0.4,                  # 亮度增强
+        "close_mosaic": 10,
+        "degrees": 10.0,
+        "translate": 0.1,
+        "scale": 0.5,
+        "shear": 0.0,
+        "perspective": 0.0,
+        "flipud": 0.0,
+        "fliplr": 0.5,
+        "hsv_h": 0.015,
+        "hsv_s": 0.7,
+        "hsv_v": 0.4,
+        "erasing": 0.4,
 
         # 训练控制
-        "amp": True,                   # 混合精度训练
-        "cache": "disk",               # 磁盘缓存（节省内存）
-        "save": True,                  # 保存检查点
-        "save_period": -1,             # 每N轮保存（-1表示只保存最佳和最后）
-        "plots": True,                 # 生成训练图表
-        "verbose": True,               # 详细输出
-        "seed": 42,                    # 随机种子
+        "amp": True,
+        "cache": "disk",
+        "save": True,
+        "save_period": -1,
+        "plots": True,
+        "verbose": True,
+        "seed": 42,
+        "deterministic": True,
     }
 
     # 打印训练配置
@@ -206,7 +213,7 @@ def train(args):
 def main():
     """主函数"""
     print("=" * 60)
-    print("YOLOv8 螺丝缺陷检测训练")
+    print("YOLOv8 钢材表面缺陷检测训练")
     print("=" * 60)
 
     args = parse_args()

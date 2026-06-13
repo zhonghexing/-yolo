@@ -28,3 +28,7 @@ tqdm>=4.65.0
 
 # 语音反馈（可选）
 pyttsx3>=2.90
+
+# Web 监控
+flask>=3.0.0
+flask-socketio>=5.3.0

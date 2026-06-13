@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-螺丝缺陷检测数据集 - 数据增强脚本
+钢材缺陷检测数据集 - 数据增强脚本
 支持多种增强策略，用于扩充训练数据
 
 使用方法:
@@ -284,7 +284,7 @@ def augment_dataset(
             aug_img_path = output_img_path / f"{aug_filename}.jpg"
             aug_label_path = output_label_path / f"{aug_filename}.txt"
 
-            # 重新附加 class_id（取原始第一个标签的 class_id，每张图只有一个螺丝）
+            # 重新附加 class_id（取原始第一个标签的 class_id，每张图只有一个钢材）
             cls_id = labels[0][0] if labels else 0
             bboxes_with_class = [(cls_id, *b) for b in aug_bboxes]
             save_augmented_data(aug_img, bboxes_with_class, str(aug_img_path), str(aug_label_path))
@@ -301,7 +301,7 @@ def augment_dataset(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="螺丝缺陷检测数据增强")
+    parser = argparse.ArgumentParser(description="钢材缺陷检测数据增强")
     parser.add_argument("--input", type=str, required=True, help="输入图片目录")
     parser.add_argument("--labels", type=str, required=True, help="输入标签目录")
     parser.add_argument("--output", type=str, required=True, help="输出图片目录")

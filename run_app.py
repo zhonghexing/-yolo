@@ -1,5 +1,5 @@
 """
-螺丝缺陷检测系统启动脚本
+钢材缺陷检测系统启动脚本
 Application Launcher with Environment Check
 
 功能：
@@ -21,7 +21,7 @@ from pathlib import Path
 def print_banner():
     """打印启动横幅"""
     print("=" * 60)
-    print("  螺丝缺陷检测系统 v1.0.0")
+    print("  钢材缺陷检测系统 v1.0.0")
     print("  Screw Defect Detection System")
     print("=" * 60)
     print()
@@ -126,7 +126,7 @@ def check_model():
         return True
     else:
         print("未找到训练模型")
-        print("  将使用 YOLOv8n 预训练模型（未针对螺丝缺陷微调）")
+        print("  将使用 YOLOv8n 预训练模型（未针对钢材缺陷微调）")
         return True  # 不阻止启动
 
 

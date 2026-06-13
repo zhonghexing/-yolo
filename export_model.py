@@ -1,5 +1,5 @@
 """
-YOLOv8 螺丝缺陷检测模型导出脚本
+YOLOv8 钢材缺陷检测模型导出脚本
 Screw Defect Detection Model Export Script
 
 使用方法：
@@ -176,7 +176,7 @@ def export_model(model_path, fmt, args, output_dir):
 def main():
     """主函数"""
     print("=" * 60)
-    print("YOLOv8 螺丝缺陷检测模型导出")
+    print("YOLOv8 钢材缺陷检测模型导出")
     print("=" * 60)
 
     args = parse_args()

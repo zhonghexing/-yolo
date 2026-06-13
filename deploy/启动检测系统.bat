@@ -18,7 +18,7 @@ if errorlevel 1 (
 
 :: 安装依赖
 echo [1/2] 检查并安装依赖...
-pip install ultralytics PyQt5 opencv-python numpy --quiet
+pip install ultralytics PyQt5 opencv-python numpy Pillow matplotlib seaborn scikit-learn pandas tqdm pyttsx3 flask flask-socketio --quiet
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu --quiet
 
 echo.

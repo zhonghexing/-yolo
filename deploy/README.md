@@ -117,6 +117,23 @@ pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 | 拍照记录 | **摄像头模式独占**，记录每次拍照的时间、判定和缺陷列表 |
 | 底部操作 | 导出报告、导入模型、检测计数标签 |
 
+## 计时器模式
+
+系统支持 **180 秒计时模式**，适用于比赛和演示场景：
+
+- 点击工具栏的 **"180秒计时"** 按钮启动计时
+- 计时过程中可点击 **"暂停"** 按钮暂停/继续
+- 点击 **"完成"** 按钮可提前结束并查看统计
+- 计时结束自动弹出统计对话框
+
+### 统计对话框
+
+统计对话框以卡片式布局展示以下信息：
+
+- **检测用时**：实际用时 / 总时间
+- **统计卡片**：检测总数、合格数、不合格数、合格率
+- **缺陷分布**：各缺陷类型的数量和彩色进度条
+
 ## 命令行用法
 
 ```bash
@@ -162,6 +179,8 @@ deploy/
 ├── inference.py            # 推理引擎核心（模型加载、检测、可视化）
 ├── constants.py            # 类别名称和颜色常量
 ├── feedback.py             # 语音反馈模块
+├── db.py                   # SQLite 数据库（检测记录存储、历史查询）
+├── web_dashboard.py        # Web 远程监控面板（Flask+SocketIO）
 ├── visualization.py        # 可视化模块（热力图、图表）
 ├── evaluate.py             # 模型评估脚本
 ├── demo.py                 # 比赛演示脚本
@@ -170,7 +189,7 @@ deploy/
 ├── requirements_cpu.txt    # CPU 版依赖清单
 ├── best.pt                 # 训练好的 YOLOv8s 模型（21.5 MB）
 ├── yolov8n.pt              # YOLOv8n 预训练模型（备用，6.3 MB）
-├── test_images/            # 4 张测试图片
+├── test_images/            # 测试图片
 ├── README.md               # 项目文档
 ├── 启动检测系统.bat         # 一键安装依赖并启动 GUI
 ├── 测试环境.bat             # 环境检查脚本
@@ -184,11 +203,11 @@ deploy/
 
 | 类别 | 英文名称 | 框颜色 |
 |------|----------|--------|
-| 龟裂 | crazing | 红色 |
+| 龟裂 | crazing | 青色 |
 | 夹杂 | inclusion | 橙色 |
-| 斑块 | patches | 黄绿色 |
-| 麻点 | pitted_surface | 紫红色 |
-| 氧化皮 | rolled-in_scale | 深橙色 |
+| 斑块 | patches | 绿色 |
+| 麻点 | pitted_surface | 紫色 |
+| 氧化皮 | rolled-in_scale | 红橙色 |
 | 划痕 | scratches | 天蓝色 |
 
 ## 模型信息

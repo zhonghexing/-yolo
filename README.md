@@ -8,6 +8,9 @@
 
 - **6 类缺陷检测**：龟裂、夹杂、斑块、麻点、氧化皮、划痕
 - **三种检测模式**：图片检测、摄像头实时检测、视频文件检测
+- **手机摄像头支持**：支持 DroidCam、IP Webcam 等手机视频流
+- **图片自动保存**：拍照统计和图片检测自动保存标注图
+- **Web 远程监控**：支持查看原图和标注图，实时统计
 - **现代化 UI**：深色主题 + 工业风配色，左右分栏布局，支持拖放
 - **一键部署**：26MB 部署包，解压双击即可运行
 
@@ -16,7 +19,7 @@
 | 类别 | 技术 |
 |------|------|
 | 深度学习框架 | PyTorch 2.12 + Ultralytics 8.4 |
-| 检测模型 | YOLOv8s（部署）/ YOLOv8m（训练） |
+| 检测模型 | YOLOv8s（21.5MB） |
 | 桌面 GUI | PyQt5 |
 | 图像处理 | OpenCV, Pillow |
 | 模型导出 | ONNX, TensorRT（export_model.py） |
@@ -38,9 +41,7 @@
 D:/yolo/
 ├── app.py                  # PyQt5 桌面应用主程序
 ├── inference.py            # 推理引擎核心
-├── train.py                # 训练脚本
-├── train_optimized.py      # 优化版训练（v3）
-├── train_v1_optimized.py   # v1 优化训练
+├── train.py                # 训练脚本（基于 v1 最佳参数）
 ├── evaluate.py             # 模型评估
 ├── demo.py                 # 竞赛演示（20样本/180秒）
 ├── export_model.py         # 模型导出（ONNX/TensorRT）
@@ -55,25 +56,29 @@ D:/yolo/
 ├── app_icon.ico            # 应用图标
 ├── requirements.txt        # Python 依赖
 ├── environment.yml         # Conda 环境配置
-├── yolov8n.pt / yolov8s.pt / yolov8m.pt  # 预训练基础模型
+├── yolov8s.pt / yolov8n.pt # 预训练基础模型
 ├── 基于AI视觉的工业零件缺陷检测方案.pptx  # 竞赛答辩 PPT
 ├── datasets/
 │   └── neu_det/            # NEU-DET 钢材缺陷数据集
 │       ├── data.yaml
-│       ├── train/images/   # 1864 张（增强后）
-│       ├── val/images/     # 324 张
-│       └── test/images/    # 180 张
+│       ├── train/images/   # 训练集
+│       ├── val/images/     # 验证集
+│       └── test/images/    # 测试集 (180张)
 ├── deploy/                 # 部署包源文件
 │   ├── app.py              # GUI 主程序
 │   ├── inference.py        # 推理引擎
-│   ├── best.pt             # v1 模型 (YOLOv8s, mAP50=0.768)
+│   ├── best.pt             # 部署模型 (YOLOv8s)
 │   ├── yolov8n.pt          # 备用模型
 │   ├── README.md           # 部署文档
-│   ├── test_images/        # 4 张测试图
+│   ├── test_images/        # 测试图片
 │   └── *.bat               # 一键启动脚本
-├── deploy_package.zip      # 部署包 (26MB)
+├── defect_records/         # 缺陷记录
+│   ├── snapshots/          # 拍照统计保存的标注图
+│   └── annotated/          # 图片检测保存的标注图
+├── data/                   # 应用数据库
 ├── runs/
-│   ├── train/              # 训练结果（v1/v2/v3/v1_optimized）
+│   ├── train/
+│   │   └── screw_defect-11/  # v1: yolov8s (mAP50=0.761) ★最佳模型
 │   ├── detect/             # 检测结果
 │   ├── eval/               # 评估报告
 │   └── demo/               # 演示结果
@@ -103,17 +108,14 @@ python check_gpu.py
 ### 模型训练
 
 ```bash
-# 默认训练（yolov8m, 100 epochs）
+# 默认训练（yolov8s, 150 epochs, 基于 v1 最佳参数）
 python train.py
 
-# 指定模型和参数
-python train.py --model yolov8s.pt --epochs 150 --batch 16
+# 指定参数
+python train.py --epochs 50 --batch 16
 
 # 恢复训练
-python train.py --resume runs/train/screw_defect_v2/weights/last.pt
-
-# 优化训练
-python train_optimized.py --model runs/train/screw_defect_v2/weights/best.pt
+python train.py --resume runs/train/screw_defect-11/weights/last.pt
 ```
 
 ### 启动应用
@@ -144,14 +146,11 @@ python export_model.py --format onnx
 
 ## 模型版本
 
-| 版本 | 模型 | 大小 | mAP@0.5 | 说明 |
-|------|------|------|---------|------|
-| v1 (screw_defect-11) | YOLOv8s | 21.5 MB | **0.768** | ★ 当前部署版本 |
-| v2 (screw_defect_v2) | YOLOv8m | 197.9 MB | — | 大模型基线 |
-| v3 (v3_optimized) | YOLOv8m | 49.7 MB | 0.675 | 优化参数训练 |
-| v1_optimized | YOLOv8s | 21.5 MB | — | v1 优化尝试 |
+| 版本 | 模型 | 大小 | mAP@0.5 | mAP@0.5:0.95 | 说明 |
+|------|------|------|---------|---------------|------|
+| v1 (screw_defect-11) | YOLOv8s | 21.5 MB | **0.761** | **0.421** | ★ 最佳模型，当前部署 |
 
-### v3 各类别 AP@0.5
+### v1 各类别 AP@0.5
 
 | 类别 | AP@0.5 |
 |------|--------|
@@ -161,6 +160,8 @@ python export_model.py --format onnx
 | inclusion（夹杂） | 0.684 |
 | rolled-in_scale（氧化皮） | 0.508 |
 | crazing（龟裂） | 0.264 |
+
+> 注：使用更大模型（yolov8m/l）反而过拟合，效果不如 yolov8s。当前训练脚本已统一为 v1 最佳参数。
 
 ## 部署
 
@@ -174,6 +175,7 @@ python export_model.py --format onnx
 ## 文档
 
 - [部署文档](deploy/README.md) — 部署和使用说明
+- [手机摄像头使用指南](docs/手机摄像头使用指南.md) — 手机视频流、图片保存、Web监控
 - [需求分析](docs/requirements.md)
 - [系统架构](docs/architecture.md)
 - [数据集规范](docs/dataset.md)
@@ -187,4 +189,4 @@ python export_model.py --format onnx
 
 ---
 
-**项目状态**：已完成 | **最后更新**：2026年5月30日
+**项目状态**：已完成 | **最后更新**：2026年6月10日

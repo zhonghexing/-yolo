@@ -25,36 +25,37 @@ CLASS_NAMES_CN = {
     "pitted_surface":     "麻点",
     "rolled-in_scale":    "氧化皮",
     "scratches":          "划痕",
+    "normal":             "正常",
 }
 
 # 各类别对应的颜色 (BGR 格式，用于 OpenCV 绘制)
 CLASS_COLORS_BGR = {
-    "crazing":            (0, 0, 255),       # 红色
-    "inclusion":          (0, 128, 255),     # 橙色
-    "patches":            (0, 200, 200),     # 黄绿色
-    "pitted_surface":     (128, 0, 255),     # 紫红色
-    "rolled-in_scale":    (0, 100, 255),     # 深橙色
+    "crazing":            (255, 150, 0),     # 青色
+    "inclusion":          (0, 200, 255),     # 橙色
+    "patches":            (0, 255, 100),     # 绿色
+    "pitted_surface":     (200, 0, 255),     # 紫色
+    "rolled-in_scale":    (0, 100, 255),     # 红橙色
     "scratches":          (255, 200, 0),     # 天蓝色
 }
 
 # 各类别对应的颜色 (RGB 格式，用于 Qt 绘制)
 CLASS_COLORS_RGB = {
-    "crazing":            (255, 0, 0),
-    "inclusion":          (255, 128, 0),
-    "patches":            (200, 200, 0),
-    "pitted_surface":     (255, 0, 128),
-    "rolled-in_scale":    (255, 100, 0),
-    "scratches":          (0, 200, 255),
+    "crazing":            (0, 150, 255),     # 青色
+    "inclusion":          (255, 200, 0),     # 橙色
+    "patches":            (100, 255, 0),     # 绿色
+    "pitted_surface":     (255, 0, 200),     # 紫色
+    "rolled-in_scale":    (255, 100, 0),     # 红橙色
+    "scratches":          (0, 200, 255),     # 天蓝色
 }
 
 # matplotlib 绘图用的颜色 (十六进制)
 CLASS_COLORS_HEX = [
-    '#e74c3c',  # 龟裂 - 红色
-    '#f39c12',  # 夹杂 - 橙色
-    '#2ecc71',  # 斑块 - 黄绿色
-    '#9b59b6',  # 麻点 - 紫红色
-    '#e67e22',  # 氧化皮 - 深橙色
-    '#3498db',  # 划痕 - 天蓝色
+    '#0096ff',  # 龟裂 - 青色
+    '#ffc800',  # 夹杂 - 橙色
+    '#64ff00',  # 斑块 - 绿色
+    '#ff00c8',  # 麻点 - 紫色
+    '#ff6400',  # 氧化皮 - 红橙色
+    '#00c8ff',  # 划痕 - 天蓝色
 ]
 
 NC = len(CLASS_NAMES)  # 类别数量

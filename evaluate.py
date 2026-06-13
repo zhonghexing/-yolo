@@ -1,5 +1,5 @@
 """
-YOLOv8 螺丝缺陷检测模型评估脚本
+YOLOv8 钢材缺陷检测模型评估脚本
 Screw Defect Detection Model Evaluation Script
 
 使用方法：
@@ -151,7 +151,7 @@ def generate_report(metrics, output_dir, split="val"):
     txt_path = output_dir / "evaluation_report.txt"
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("=" * 60 + "\n")
-        f.write("螺丝缺陷检测模型评估报告\n")
+        f.write("钢材缺陷检测模型评估报告\n")
         f.write("Screw Defect Detection Model Evaluation Report\n")
         f.write("=" * 60 + "\n\n")
         f.write(f"评估时间: {report['evaluation_time']}\n")
@@ -318,7 +318,7 @@ def evaluate(args):
 def main():
     """主函数"""
     print("=" * 60)
-    print("YOLOv8 螺丝缺陷检测模型评估")
+    print("YOLOv8 钢材缺陷检测模型评估")
     print("=" * 60)
 
     args = parse_args()
